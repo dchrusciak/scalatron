@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServlet
 import rest.RestApplication
 import scalatron.core.Scalatron
 import com.sun.jersey.spi.container.servlet.ServletContainer
-import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
+import servelets.{AdminServlet, RegistrationServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
 import akka.actor.ActorSystem
 
 
@@ -81,6 +81,7 @@ object WebServer {
         val context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/")
         context.addServlet(holder(HomePageServlet(webCtx)), "/*")
+        context.addServlet(holder(RegistrationServlet(webCtx)), "/register/*")
         context.addServlet(holder(UserServlet(webCtx)), "/user/*")
         context.addServlet(holder(AdminServlet(webCtx)), "/admin/*")
         context.addServlet(holder(GitServlet(webCtx)), "/git/*")

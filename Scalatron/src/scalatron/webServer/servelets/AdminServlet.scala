@@ -4,8 +4,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import scalatron.core.Scalatron.Constants._
 import scalatron.scalatron.impl.SourceFileCollection
 
-
-case class AdminServlet(context: WebContext) extends BaseServlet {
+case class AdminServlet(context: WebContext) extends BaseServlet with CreateUser {
     override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
         val target = request.getRequestURI
         if(!target.startsWith("/admin/")) {
@@ -13,7 +12,6 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
             System.err.println("error: unexpected admin url: '" + target + "'")
             return
         }
-
 
         // Make sure that our user is an admin. If not redirect to the login prompt.
         if(request.getSession.getAttribute("user") != AdminUserName) {
@@ -72,62 +70,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
     // "/admin/createUser?username=xxx"
     private def handleAdminCreateUserPage(request: HttpServletRequest, response: HttpServletResponse) {
-        val userName = request.getParameter("username")
-        if(userName == null || userName.isEmpty) {
-            serveErrorPage("user name must not be empty", "/admin/list", "return to administration main page", request, response)
-            System.err.println("error: received empty user name")
-            return
-        }
-        if(!context.scalatron.isUserNameValid(userName)) {
-            serveErrorPage("invalid user name: '" + userName + "': must not contain special characters", "/admin/list", "return to administration main page", request, response)
-            System.err.println("error: received invalid user name: '" + userName + "'")
-            return
-        }
-
-        // verify the password field
-        val password1 = request.getParameter("password1")
-        val password2 = request.getParameter("password2")
-        if(password1 == null || password2 == null) {
-            serveErrorPage("invalid password field", "/admin/list", "return to administration main page", request, response)
-            System.err.println("error: received invalid password field")
-            return
-        }
-
-        if(password1 != password2) {
-            serveErrorPage("passwords fields do not match", "/admin/list", "return to administration main page", request, response)
-            System.err.println("error: passwords fields do not match")
-            return
-        }
-
-        // does that user already exist?
-        try {
-            val userOpt = context.scalatron.user(userName)
-            userOpt match {
-                case Some(user) =>
-                    serveErrorPage("user already exists: '" + userName + "'", "/admin/list", "return to administration main page", request, response)
-                    System.err.println("error: user already exists: '" + userName + "'")
-                    return
-                case None => // OK -- user does not yet exist
-            }
-        } catch {
-            case t: Throwable =>
-                serveErrorPage("unable to verify user directory for '" + userName + "'", "/admin/list", "return to administration main page", request, response)
-                System.err.println("error: failed to check whether user exists: '" + userName + "': " + t)
-                return
-        }
-
-
-        // create the user password config file
-        try {
-            context.scalatron.createUser(userName, password1, SourceFileCollection.initial(userName))
-        } catch {
-            case t: Throwable =>
-                serveErrorPage("unable to write user configuration file for '" + userName + "'", "/admin/list", "return to administration main page", request, response)
-                System.err.println("error: unable to create user account for: '" + userName + "': " + t)
-                return
-        }
-
-        response.sendRedirect("/admin/list")
+        handleCreateUserPage(request, response, "/admin/list", "administration main page")
     }
 
 
